@@ -10,6 +10,7 @@ import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.spellwind.model.World;
 import org.spellwind.net.MudPipelineFactory;
+import org.spellwind.persist.PersistenceManager;
 import org.spellwind.task.TaskQueue;
 
 /**
@@ -31,7 +32,9 @@ public final class Server {
 	 */
 	public static void main(String[] args) {
 		try {
-			Server server = new Server(4000);
+			logger.info("Loading configuration...");
+			ServerConfiguration configuration = PersistenceManager.getManager().loadConfiguration();
+			Server server = new Server(configuration);
 			server.start();
 		} catch(Throwable t) {
 			logger.log(Level.SEVERE, "Error starting server.", t);
@@ -39,9 +42,9 @@ public final class Server {
 	}
 	
 	/**
-	 * The port to bind to.
+	 * The server configuration.
 	 */
-	private final int port;
+	private final ServerConfiguration configuration;
 	
 	/**
 	 * The <code>ServerBootstrap</code> object.
@@ -50,11 +53,11 @@ public final class Server {
 	
 	/**
 	 * Creates the server, initialising Netty and the game world.
-	 * @param port The port to bind to.
+	 * @param port The configuration.
 	 */
-	public Server(int port) {
+	public Server(ServerConfiguration configuration) {
 		logger.info("Starting Spellwind...");
-		this.port = port;
+		this.configuration = configuration;
 		initNetty();
 		initWorld();
 	}
@@ -88,8 +91,8 @@ public final class Server {
 	 * server is shut down.
 	 */
 	public void start() {
-		logger.info("Binding to port: " + port + "...");
-		bootstrap.bind(new InetSocketAddress(port));
+		logger.info("Binding to port: " + configuration.getPort() + "...");
+		bootstrap.bind(new InetSocketAddress(configuration.getPort()));
 		logger.info("Ready for connections.");
 		processTasks();
 	}
